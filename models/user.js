@@ -5,21 +5,35 @@ const userSchema = new mongoose.Schema(
     name: {
       type: String,
       unique: true,
-      required: true,
+      required: [true, "Name is required."],
     },
     email: {
       type: String,
       required: true,
-      unique: true,
+      unique: [true, "Email is required."],
     },
     password: {
       type: String,
-      required: true,
+      required: [true, "Password is required."],
       select: false,
     },
     isAdmin: {
       type: Boolean,
       default: false,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    avatar: {
+      public_id: {
+        type: String,
+      },
+      url: {
+        type: String,
+        default:
+          "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
+      },
     },
   },
   { timestamps: true }
