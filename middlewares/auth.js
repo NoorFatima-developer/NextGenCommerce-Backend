@@ -1,7 +1,8 @@
 import jwt from "jsonwebtoken";
 import User from "../models/user.js";
+import { asyncRequestHandler } from "../utils/asyncHandler.js";
 
-export const isAuthenticated = async (req, res, next) => {
+export const isAuthenticated = asyncRequestHandler (async (req, res, next) => {
   const { token } = req.cookies; // Extract token from cookies
   console.log("Token:", token);
 
@@ -11,8 +12,6 @@ export const isAuthenticated = async (req, res, next) => {
       message: "Login First!",
     });
   }
-
-  try {
     // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log("Decoded Token:", decoded);
@@ -28,14 +27,8 @@ export const isAuthenticated = async (req, res, next) => {
     }
 
     next(); // Proceed to next middleware/controller
-  } catch (error) {
-    console.error("Authentication Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
-};
+
+});
 
 export const isAuthorized = (requiredRole) => {
   return (req, res, next) => {

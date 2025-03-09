@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-
+import crypto from 'crypto'
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -16,6 +16,7 @@ const userSchema = new mongoose.Schema(
       required: [true, "Password is required."],
       select: false,
     },
+
     isAdmin: {
       type: Boolean,
       default: false,
@@ -34,9 +35,26 @@ const userSchema = new mongoose.Schema(
           "https://icon-library.com/images/anonymous-avatar-icon/anonymous-avatar-icon-25.jpg",
       },
     },
+    resetPasswordToken: String,
+    resetPasswordExpire: String,
   },
-  { timestamps: true }
+  { timestamps: true },
+  
 );
+
+// pass this token to email..
+userSchema.methods.getResetToken = function(){
+
+  const resetToken = crypto.randomBytes(20).toString("hex");
+  // Implement Algorithm to convert it into Hash...
+  this.resetPasswordToken =
+  crypto.createHash("sha256").update(resetToken).digest("hex");
+  // set expire time...
+  this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
+
+  console.log(resetToken);
+  return resetToken;
+}
 
 const User = mongoose.model("User", userSchema);
 export default User;

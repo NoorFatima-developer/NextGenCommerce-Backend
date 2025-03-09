@@ -10,13 +10,16 @@ export const sendEmail = async (email) => {
 
   const token = jwt.sign({ email }, process.env.JWT_EMAIL_SECRET, {
     expiresIn: process.env.JWT_EMAIL_SECRET_EXPIRY_TIME,
-  });
+  }); 
 
-  const verifyLink = `http://localhost:9000/api/v1/user/verify-email?token=${token}`;
+  console.log(token);
+  
+
+  const verifyLink = `http://localhost:6000/api/v1/user/verify-email?token=${encodeURIComponent(token)}`;
 
   const { data, error } = await resend.emails.send({
     from: "Noor Fatima <onboarding@resend.dev>",
-    to: email,
+    to: "nf982873@gmail.com",
     subject: "Verification Email",
     html: `<strong>
     Thanks for signing in with us please click on the link below to verify
@@ -27,3 +30,5 @@ export const sendEmail = async (email) => {
 
   return { data, error };
 };
+
+
