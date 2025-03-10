@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
 import crypto from 'crypto'
 const userSchema = new mongoose.Schema(
   {
@@ -42,6 +43,19 @@ const userSchema = new mongoose.Schema(
   
 );
 
+// VerificationEmail token using jwt...
+userSchema.methods.getEmailVerificationToken = function(){
+  const token = jwt.sign(
+      { email: this.email },
+     process.env.JWT_EMAIL_SECRET,
+      { expiresIn: process.env.JWT_EMAIL_SECRET_EXPIRY_TIME,}
+    ); 
+    console.log(token);
+    return token;
+}
+
+// ResetPassword token using crypto to send via email...
+
 // pass this token to email..
 userSchema.methods.getResetToken = function(){
 
@@ -55,6 +69,8 @@ userSchema.methods.getResetToken = function(){
   console.log(resetToken);
   return resetToken;
 }
+
+
 
 const User = mongoose.model("User", userSchema);
 export default User;

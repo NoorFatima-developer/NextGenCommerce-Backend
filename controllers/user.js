@@ -3,12 +3,10 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { sendCookie } from "../utils/features.js";
 import { asyncRequestHandler } from "../utils/asyncHandler.js";
-import userSchema from "../validationSchemas/userValidationSchema.js";
+import {userSchema,  loginSchema, resetSchema } from "../validationSchemas/userValidationSchema.js";
 import ErrorHandler from "../utils/error.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
-import loginSchema from "../validationSchemas/uservalidationloginSchema.js";
-import { sendforgetEmail } from "../utils/sendforgetEmail.js";
 
 export const register = asyncRequestHandler(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -30,7 +28,11 @@ export const register = asyncRequestHandler(async (req, res, next) => {
     password: hashedPassword,
   });
 
-  const { data, error: resendError } = await sendEmail(email);
+  const verificationToken = await user.getEmailVerificationToken();
+  // save token in db..
+  await user.save();
+  // send token to email..
+  const { data, error: resendError } = await sendEmail(verificationToken, user.email, "verify");
 
   if (resendError) {
     console.log("Resend Email Error:", resendError);
@@ -123,6 +125,12 @@ export const profileUpdate = asyncRequestHandler(async (req, res, next) => {
   const {name, email, password, newPassword} = req.body;
   const userId = req.user._id;
   const user = await User.findById(userId);
+  const { error } = userSchema.validate(req.body);
+
+  // check user validation...
+  if (error) {
+    return next(new ErrorHandler(error.details[0].message, 400));
+  }
 
   if (!user) {
     return next(new ErrorHandler("User not found.", 404));
@@ -183,11 +191,11 @@ export const forgetPassword = asyncRequestHandler(async(req, res, next) => {
   if(!user)
     return next(new ErrorHandler("User not found", 400))
 
-  const resetTokens = await user.getResetToken()
+  const resetToken = await user.getResetToken()
   // save token in db..
   await user.save();
     // send token to email..
-  const { data, error: resendError } = await sendforgetEmail(resetTokens);
+  const { data, error: resendError } = await sendEmail(resetToken, user.email, "reset");
 
   if (resendError) {
     console.log("Resend Email Error:", resendError);
@@ -204,6 +212,13 @@ export const forgetPassword = asyncRequestHandler(async(req, res, next) => {
 // Reset Password...
 export const resetPassword = asyncRequestHandler(async(req, res, next) => {
   const {token} = req.params;
+  const {password} = req.body;
+  const { error } = resetSchema.validate(req.body);
+
+  // check user validation...
+  if (error) {
+    return next(new ErrorHandler(error.details[0].message, 400));
+  }
 
   const resetPasswordToken =
     crypto.createHash("sha256").update(token).digest("hex");
@@ -219,7 +234,10 @@ export const resetPassword = asyncRequestHandler(async(req, res, next) => {
   if(!user)
     return next(new ErrorHandler("Token is invalid or has been Expired", 400));
 
-  user.password = req.body.password;
+  // Hash the new password using bcrypt...
+  const hashedPassword = await bcrypt.hash(password, 10)
+
+  user.password = hashedPassword;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
   
