@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import crypto from 'crypto'
+import { type } from "os";
 const userSchema = new mongoose.Schema(
   {
     name: {
@@ -18,10 +19,12 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
 
-    isAdmin: {
-      type: Boolean,
-      default: false,
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
     },
+    
     isVerified: {
       type: Boolean,
       default: false,

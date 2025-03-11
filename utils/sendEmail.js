@@ -13,12 +13,12 @@ export const sendEmail = async (token, email, type) => {
   let message;  
 
   if (type === "verify") {
-    link = `http://localhost:6000/api/v1/user/verify-email?token=${encodeURIComponent(token)}`;
+    link = `http://localhost:5000/api/v1/user/verify-email?token=${encodeURIComponent(token)}`;
     subject = "Verify Your Email";
     message = "Click the link below to verify your email:";
   }
   else if (type === "reset") {
-    link = `http://localhost:6000/api/v1/user/resetpassword/${encodeURIComponent(token)}`;
+    link = `http://localhost:5000/api/v1/user/resetpassword/${encodeURIComponent(token)}`;
     subject = "Reset Your Password";
     message = "Click the link below to reset your password:";
   } else {
