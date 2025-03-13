@@ -247,6 +247,11 @@ export const addReview = asyncRequestHandler(async(req, res, next)=> {
     const { id } = req.params;
     const {rating, comment} = req.body;
 
+    const { error } = reviewSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ success: false, message: error.details[0].message });
+    }
+
     // Find product to check if user has already given review to the product..
     const product = await Product.findById(id);
 
@@ -287,6 +292,11 @@ export const updateReview = asyncRequestHandler(async(req, res, next)=>{
     const product = await Product.findById(id);
     const {rating } = req.body;
     const {comment }= req.body;
+
+    const { error } = reviewSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ success: false, message: error.details[0].message });
+    }
 
     if(!product)
         return next(new ErrorHandler("Product Not Found", 404));

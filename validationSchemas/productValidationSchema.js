@@ -54,3 +54,19 @@ export const updateProductSchema = Joi.object({
 }).min(1).messages({
     "object.min": "At least one field is required to update the product.",
 });
+
+// Review Schema
+export const reviewSchema = Joi.object({
+    rating: Joi.number().min(1).max(5).required().messages({
+        "number.base": "Rating must be a number.",
+        "number.min": "Rating must be at least 1.",
+        "number.max": "Rating cannot be more than 5.",
+        "any.required": "Rating is required.",
+    }),
+    comment: Joi.string().min(5).max(500).required().messages({
+        "string.base": "Comment must be a string.",
+        "string.empty": "Comment is required.",
+        "string.min": "Comment must be at least 5 characters long.",
+        "string.max": "Comment cannot exceed 500 characters.",
+    }),
+});
