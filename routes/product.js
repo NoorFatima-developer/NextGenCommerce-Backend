@@ -17,12 +17,15 @@ router.get("/admin-products", adminOnly, getAdminProducts);
 // To get all products with filter...(Search All Products...)
 router.get("/all", getAllProducts);
 
+// Get single product, update and delete single product...
 router
     .route("/:id")
     .get(getSingleProduct)
     .put(adminOnly, singleUpload, updateProduct)
     .delete(adminOnly, deleteProduct);
 
+
+// Create Review, update and delete with average rating...
 router
 .route("/review/:id")
 .post(isAuthenticated, addReview)
