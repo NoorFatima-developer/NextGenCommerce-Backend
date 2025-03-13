@@ -1,6 +1,6 @@
 import express from "express";
-import {adminOnly} from "../middlewares/auth.js"
-import { deleteProduct, getAdminProducts, getAllCategories, getAllProducts, getlatestProducts, getSingleProduct, newProduct, updateProduct } from "../controllers/product.js";
+import {adminOnly, isAuthenticated} from "../middlewares/auth.js"
+import { addReview, deleteProduct, deleteReview, getAdminProducts, getAllCategories, getAllProducts, getlatestProducts, getSingleProduct, newProduct, updateProduct, updateReview } from "../controllers/product.js";
 import { singleUpload } from "../middlewares/multer.js";
 const router = express.Router();
 
@@ -23,5 +23,10 @@ router
     .put(adminOnly, singleUpload, updateProduct)
     .delete(adminOnly, deleteProduct);
 
+router
+.route("/review/:id")
+.post(isAuthenticated, addReview)
+.put(isAuthenticated, updateReview)
+.delete(isAuthenticated, deleteReview);
 
 export default router;

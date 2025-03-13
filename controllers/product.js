@@ -5,6 +5,7 @@ import fs from "fs";
 import { myCache } from "../app.js";
 import { invalidateCache } from "../utils/features.js";
 import { productSchema, updateProductSchema } from "../validationSchemas/productValidationSchema.js";
+import { calculateAverageRating } from "../utils/averageRating.js";
 // import { faker } from '@faker-js/faker';
 
 
@@ -161,9 +162,7 @@ export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     if(price) product.price = price;
     if(stock) product.stock = stock;
     if(category) product.category = category;
-
     // save all products..
-
     await product.save();
     await invalidateCache({product: true});
 
@@ -173,9 +172,7 @@ export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     })
 });
 
-
 // Delete Product...
-
 export const deleteProduct = asyncRequestHandler(async(req, res, next)=> {
 
     // Get product from id...
@@ -191,7 +188,6 @@ export const deleteProduct = asyncRequestHandler(async(req, res, next)=> {
     await Product.deleteOne();
 
     await invalidateCache({product: true});
-
 
     return res.status(201).json({
         success : true,
@@ -245,6 +241,109 @@ export const getAllProducts = asyncRequestHandler(async(req, res, next) =>{
         totalPage,
     });
 })
+
+// Create Review..
+export const addReview = asyncRequestHandler(async(req, res, next)=> {
+    const { id } = req.params;
+    const {rating, comment} = req.body;
+
+    // Find product to check if user has already given review to the product..
+    const product = await Product.findById(id);
+
+    if(!product)
+        return next (new ErrorHandler("Product not Found", 404));
+
+     // Check reviews by product id, is user already rated to this product..
+    //  .find() b loop ki trhan hi kam krta hai and ye ek hi item return karta hai jisklye condition satisfy kare.
+     const alreadyRated = product.reviews.find(
+        (rev) => rev.user.toString() === req.user._id.toString()
+    );
+    
+    if(alreadyRated)
+        return next(new ErrorHandler("User has already added a review", 404));
+
+    const review = {
+        user: req.user._id,
+        rating,
+        comment
+    }
+
+    product.reviews.push(review);
+
+    calculateAverageRating(product);
+    await product.save();
+
+
+    res.status(201).json({
+        success: true,
+        message: "Review Added Successfully.",
+    });
+
+});
+
+// Update Review...
+export const updateReview = asyncRequestHandler(async(req, res, next)=>{
+    const id = req.params.id;
+    const product = await Product.findById(id);
+    const {rating } = req.body;
+    const {comment }= req.body;
+
+    if(!product)
+        return next(new ErrorHandler("Product Not Found", 404));
+
+    const review = product.reviews.find(
+        (rev) => rev.user.toString() === req.user._id.toString()
+    );
+
+    if(!review)
+        return next(new ErrorHandler("You haven't reviewed this product yet", 404));
+
+    review.rating = rating;
+    review.comment = comment;
+
+    calculateAverageRating(product);
+    await product.save();
+
+
+    res.status(200).json({
+        success: true,
+        message: "Review updated Sucessfully."
+    })
+    
+});
+
+// Delete Review:
+export const deleteReview = asyncRequestHandler(async(req, res, next)=>{
+    const id = req.params.id;
+    const product = await Product.findById(id);
+
+    if(!product)
+        return next(new ErrorHandler("Product Not Found", 404));
+
+    const reviewExist = product.reviews.find(
+        (rev) => rev.user.toString() === req.user._id.toString()
+    );
+
+    if(!reviewExist)
+        return next(new ErrorHandler("You haven't reviewed this product yet", 404));
+
+    // Delete reviews using filer...
+    // filter() unhi elements ko rakhta hai jinke liye condition true hoti hai...
+    // ta k osk elawa baki sary elements ko array m rkhy...
+    product.reviews = product.reviews.filter(
+        (rev) => rev.user.toString() !== req.user._id.toString()    //if user is is match then return false means delete review..
+    );
+
+    calculateAverageRating(product);
+    await product.save();
+
+    res.status(201).json({
+        success: true,
+        message: "Review deleted successfully!"
+    })
+
+});
+
 
 // Generate Random Products...
 
