@@ -4,7 +4,7 @@ import ErrorHandler from "../middlewares/error.js";
 import fs from "fs";
 import { myCache } from "../app.js";
 import { invalidateCache } from "../utils/features.js";
-import { productSchema, updateProductSchema } from "../validationSchemas/productValidationSchema.js";
+import { productSchema, reviewSchema} from "../validationSchemas/productValidationSchema.js";
 import { calculateAverageRating } from "../utils/averageRating.js";
 // import { faker } from '@faker-js/faker';
 
@@ -99,7 +99,10 @@ export const newProduct = asyncRequestHandler(async(req, res, next)=> {
     const { name, price, stock, category } = req.body;
     const photo = req.file;
 
-    const { error } = productSchema.validate(req.body);
+    const { error } = productSchema.fork( ["name", "price", "stock", "category"],
+    (schema) => schema.required())
+    .validate(req.body);
+
     if (error) return next(new ErrorHandler(error.details[0].message, 400));
 
     if(!photo)
@@ -134,13 +137,12 @@ export const newProduct = asyncRequestHandler(async(req, res, next)=> {
 
 
 // Update Product...
-
 export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     const {id} = req.params;
     const { name, price, stock, category } = req.body;
     const photo = req.file;
 
-    const { error } = updateProductSchema.validate(req.body);
+    const { error } = productSchema.min(1).validate(req.body);
     if (error) return next(new ErrorHandler(error.details[0].message, 400));
 
     const product = await Product.findById(id);
