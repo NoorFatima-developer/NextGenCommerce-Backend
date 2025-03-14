@@ -7,7 +7,7 @@ import NodeCache from "node-cache";
 
 const app = express();
 
-export const myCache = new NodeCache();
+export const myCache = new NodeCache( stdTTL, 300 );
 
 // Middlewares:
 app.use(express.json());   ///req.body

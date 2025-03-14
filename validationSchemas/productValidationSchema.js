@@ -7,6 +7,11 @@ export const productSchema = Joi.object({
         "string.min": "Product name must be at least 8 characters long.",
         "string.max": "Product name cannot exceed 100 characters.",
     }),
+    description: Joi.string().min(10).max(2000).messages({
+        "string.base": "Description must be a string.",
+        "string.min": "Description must be at least 10 characters long.",
+        "string.max": "Description cannot exceed 2000 characters.",
+    }),
     price: Joi.number().min(1).max(1000000).messages({
         "number.base": "Price must be a number.",
         "number.min": "Price must be at least 1.",

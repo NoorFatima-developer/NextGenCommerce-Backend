@@ -25,7 +25,7 @@ export const getlatestProducts = asyncRequestHandler(async(req, res, next)=> {
         myCache.set("latest-product", JSON.stringify(products));
     }
     
-    return res.status(201).json({
+    return res.status(200).json({
         success : true,
         products,
     })
@@ -34,18 +34,7 @@ export const getlatestProducts = asyncRequestHandler(async(req, res, next)=> {
 //Get All categories
 //Revalidate on New, Update, Delete Product...
 export const getAllCategories = asyncRequestHandler(async(req, res, next)=> {
-
-    let categories;
-
-    if(myCache.has("categories"))
-        categories = JSON.parse(myCache.get("categories"))
-
-    else
-    {
-        categories = await Product.distinct("category");
-        // Store products data in cache memory...
-        myCache.set("latest-product", JSON.stringify(categories));
-    }
+    const categories = await Product.distinct("category");
 
     return res.status(201).json({
         success : true,
@@ -96,10 +85,10 @@ export const getSingleProduct = asyncRequestHandler(async(req, res, next)=> {
 
 // Create newProduct...
 export const newProduct = asyncRequestHandler(async(req, res, next)=> {
-    const { name, price, stock, category } = req.body;
+    const { name, description, price, stock, category } = req.body;
     const photo = req.file;
 
-    const { error } = productSchema.fork( ["name", "price", "stock", "category"],
+    const { error } = productSchema.fork( ["name", "description", "price", "stock", "category"],
     (schema) => schema.required())
     .validate(req.body);
 
@@ -108,7 +97,7 @@ export const newProduct = asyncRequestHandler(async(req, res, next)=> {
     if(!photo)
         return next(new ErrorHandler("Please add Photo", 400));
 
-    if( !name, !price, !stock, !category)
+    if( !name || !description || !price || !stock || !category)
     {
         // photo removed from upload automatically if photo is selected and other fields are not...
         fs.rm(photo.path, ()=>{
@@ -120,6 +109,7 @@ export const newProduct = asyncRequestHandler(async(req, res, next)=> {
     }
     await Product.create({
         name,
+        description,
         price,
         stock,
         category,
@@ -139,7 +129,7 @@ export const newProduct = asyncRequestHandler(async(req, res, next)=> {
 // Update Product...
 export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     const {id} = req.params;
-    const { name, price, stock, category } = req.body;
+    const { name, description, price, stock, category } = req.body;
     const photo = req.file;
 
     const { error } = productSchema.min(1).validate(req.body);
@@ -161,6 +151,7 @@ export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     }
 
     if(name) product.name = name;
+    if(description) product.description = description;
     if(price) product.price = price;
     if(stock) product.stock = stock;
     if(category) product.category = category;
@@ -355,7 +346,6 @@ export const deleteReview = asyncRequestHandler(async(req, res, next)=>{
     })
 
 });
-
 
 // Generate Random Products...
 

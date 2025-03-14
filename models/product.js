@@ -7,6 +7,13 @@ const ProductSchema = new mongoose.Schema(
       required: [true, "Name is required"],
     },
 
+    description: {
+      type: String,
+      required: [true, "Please enter Description"],
+      minlength: [10, "Description must be at least 10 characters long."],
+      maxlength: [2000, "Description cannot exceed 2000 characters."]
+    },
+    
     photo: {
       type: String,
       required: [true, "Please enter Photo"],
