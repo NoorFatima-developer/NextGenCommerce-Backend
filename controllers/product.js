@@ -33,16 +33,7 @@ export const getlatestProducts = asyncRequestHandler(async (req, res, next) => {
 //Get All categories
 //Revalidate on New, Update, Delete Product...
 export const getAllCategories = asyncRequestHandler(async (req, res, next) => {
-  let categories;
-
-  if (myCache.has("categories"))
-    categories = JSON.parse(myCache.get("categories"));
-  else {
-    categories = await Product.distinct("category");
-    // Store products data in cache memory...
-    myCache.set("latest-product", JSON.stringify(categories));
-  }
-  categories = await Product.distinct("category");
+  const categories = await Product.distinct("category");
 
   return res.status(201).json({
     success: true,
@@ -130,7 +121,6 @@ export const newProduct = asyncRequestHandler(async (req, res, next) => {
 });
 
 // Update Product...
-
 export const updateProduct = asyncRequestHandler(async (req, res, next) => {
   const { id } = req.params;
   const { name, description, price, stock, category } = req.body;
@@ -153,13 +143,6 @@ export const updateProduct = asyncRequestHandler(async (req, res, next) => {
   }
 
   if (name) product.name = name;
-
-  if (price) product.price = price;
-  if (stock) product.stock = stock;
-  if (category) product.category = category;
-
-  // save all products..
-
   if (description) product.description = description;
   if (price) product.price = price;
   if (stock) product.stock = stock;
@@ -175,7 +158,6 @@ export const updateProduct = asyncRequestHandler(async (req, res, next) => {
 });
 
 // Delete Product...
-
 export const deleteProduct = asyncRequestHandler(async (req, res, next) => {
   // Get product from id...
   const product = await Product.findById(req.params.id);
