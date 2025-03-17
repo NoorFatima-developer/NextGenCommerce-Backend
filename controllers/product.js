@@ -6,10 +6,6 @@ import { myCache } from "../app.js";
 import { invalidateCache } from "../utils/features.js";
 import {
   productSchema,
-  updateProductSchema,
-} from "../validationSchemas/productValidationSchema.js";
-import {
-  productSchema,
   reviewSchema,
 } from "../validationSchemas/productValidationSchema.js";
 import { calculateAverageRating } from "../utils/averageRating.js";
