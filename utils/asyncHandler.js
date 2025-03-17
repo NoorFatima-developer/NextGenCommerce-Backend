@@ -5,4 +5,3 @@ export const asyncRequestHandler = (func) => async (req, res, next) => {
     next(error);
   }
 };
-

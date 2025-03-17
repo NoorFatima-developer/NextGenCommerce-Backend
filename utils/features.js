@@ -1,4 +1,6 @@
 import jwt from 'jsonwebtoken';
+import { myCache } from '../app.js';
+import Product from '../models/product.js';
 
 export const sendCookie = (user, res, statusCode=200, message) => {
 
@@ -20,3 +22,29 @@ export const sendCookie = (user, res, statusCode=200, message) => {
     })
 }
 
+export const invalidateCache = async(product, order,admin) => {
+    if(product) {
+        const productKeys = [
+            "latest-products",
+            "categories",
+            "all-products"
+        ];
+        // `product-${id}`
+
+        const products = await Product.find({}).select("_id");
+
+        products.forEach(i => {
+            // const id = i._id;
+            // const id = `product-${id}`
+            productKeys.push(`product-${id}`)
+        })
+
+        myCache.del(productKeys);
+    }
+    if(order) {
+
+    }
+    if(admin){
+
+    }
+}

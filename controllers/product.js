@@ -4,7 +4,12 @@ import ErrorHandler from "../middlewares/error.js";
 import fs from "fs";
 import { myCache } from "../app.js";
 import { invalidateCache } from "../utils/features.js";
+<<<<<<< HEAD
 import { productSchema, updateProductSchema } from "../validationSchemas/productValidationSchema.js";
+=======
+import { productSchema, reviewSchema} from "../validationSchemas/productValidationSchema.js";
+import { calculateAverageRating } from "../utils/averageRating.js";
+>>>>>>> products
 // import { faker } from '@faker-js/faker';
 
 
@@ -24,7 +29,11 @@ export const getlatestProducts = asyncRequestHandler(async(req, res, next)=> {
         myCache.set("latest-product", JSON.stringify(products));
     }
     
+<<<<<<< HEAD
     return res.status(201).json({
+=======
+    return res.status(200).json({
+>>>>>>> products
         success : true,
         products,
     })
@@ -33,6 +42,7 @@ export const getlatestProducts = asyncRequestHandler(async(req, res, next)=> {
 //Get All categories
 //Revalidate on New, Update, Delete Product...
 export const getAllCategories = asyncRequestHandler(async(req, res, next)=> {
+<<<<<<< HEAD
 
     let categories;
 
@@ -45,6 +55,9 @@ export const getAllCategories = asyncRequestHandler(async(req, res, next)=> {
         // Store products data in cache memory...
         myCache.set("latest-product", JSON.stringify(categories));
     }
+=======
+    const categories = await Product.distinct("category");
+>>>>>>> products
 
     return res.status(201).json({
         success : true,
@@ -95,16 +108,30 @@ export const getSingleProduct = asyncRequestHandler(async(req, res, next)=> {
 
 // Create newProduct...
 export const newProduct = asyncRequestHandler(async(req, res, next)=> {
+<<<<<<< HEAD
     const { name, price, stock, category } = req.body;
     const photo = req.file;
 
     const { error } = productSchema.validate(req.body);
+=======
+    const { name, description, price, stock, category } = req.body;
+    const photo = req.file;
+
+    const { error } = productSchema.fork( ["name", "description", "price", "stock", "category"],
+    (schema) => schema.required())
+    .validate(req.body);
+
+>>>>>>> products
     if (error) return next(new ErrorHandler(error.details[0].message, 400));
 
     if(!photo)
         return next(new ErrorHandler("Please add Photo", 400));
 
+<<<<<<< HEAD
     if( !name, !price, !stock, !category)
+=======
+    if( !name || !description || !price || !stock || !category)
+>>>>>>> products
     {
         // photo removed from upload automatically if photo is selected and other fields are not...
         fs.rm(photo.path, ()=>{
@@ -116,6 +143,10 @@ export const newProduct = asyncRequestHandler(async(req, res, next)=> {
     }
     await Product.create({
         name,
+<<<<<<< HEAD
+=======
+        description,
+>>>>>>> products
         price,
         stock,
         category,
@@ -133,6 +164,7 @@ export const newProduct = asyncRequestHandler(async(req, res, next)=> {
 
 
 // Update Product...
+<<<<<<< HEAD
 
 export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     const {id} = req.params;
@@ -140,6 +172,14 @@ export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     const photo = req.file;
 
     const { error } = updateProductSchema.validate(req.body);
+=======
+export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
+    const {id} = req.params;
+    const { name, description, price, stock, category } = req.body;
+    const photo = req.file;
+
+    const { error } = productSchema.min(1).validate(req.body);
+>>>>>>> products
     if (error) return next(new ErrorHandler(error.details[0].message, 400));
 
     const product = await Product.findById(id);
@@ -158,12 +198,20 @@ export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     }
 
     if(name) product.name = name;
+<<<<<<< HEAD
     if(price) product.price = price;
     if(stock) product.stock = stock;
     if(category) product.category = category;
 
     // save all products..
 
+=======
+    if(description) product.description = description;
+    if(price) product.price = price;
+    if(stock) product.stock = stock;
+    if(category) product.category = category;
+    // save all products..
+>>>>>>> products
     await product.save();
     await invalidateCache({product: true});
 
@@ -173,9 +221,13 @@ export const updateProduct = asyncRequestHandler(async(req, res, next)=> {
     })
 });
 
+<<<<<<< HEAD
 
 // Delete Product...
 
+=======
+// Delete Product...
+>>>>>>> products
 export const deleteProduct = asyncRequestHandler(async(req, res, next)=> {
 
     // Get product from id...
@@ -192,7 +244,10 @@ export const deleteProduct = asyncRequestHandler(async(req, res, next)=> {
 
     await invalidateCache({product: true});
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> products
     return res.status(201).json({
         success : true,
         message: "Product Deleted Successfully",
@@ -246,6 +301,121 @@ export const getAllProducts = asyncRequestHandler(async(req, res, next) =>{
     });
 })
 
+<<<<<<< HEAD
+=======
+// Create Review..
+export const addReview = asyncRequestHandler(async(req, res, next)=> {
+    const { id } = req.params;
+    const {rating, comment} = req.body;
+
+    const { error } = reviewSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ success: false, message: error.details[0].message });
+    }
+
+    // Find product to check if user has already given review to the product..
+    const product = await Product.findById(id);
+
+    if(!product)
+        return next (new ErrorHandler("Product not Found", 404));
+
+     // Check reviews by product id, is user already rated to this product..
+    //  .find() b loop ki trhan hi kam krta hai and ye ek hi item return karta hai jisklye condition satisfy kare.
+     const alreadyRated = product.reviews.find(
+        (rev) => rev.user.toString() === req.user._id.toString()
+    );
+    
+    if(alreadyRated)
+        return next(new ErrorHandler("User has already added a review", 404));
+
+    const review = {
+        user: req.user._id,
+        rating,
+        comment
+    }
+
+    product.reviews.push(review);
+
+    calculateAverageRating(product);
+    await product.save();
+
+
+    res.status(201).json({
+        success: true,
+        message: "Review Added Successfully.",
+    });
+
+});
+
+// Update Review...
+export const updateReview = asyncRequestHandler(async(req, res, next)=>{
+    const id = req.params.id;
+    const product = await Product.findById(id);
+    const {rating } = req.body;
+    const {comment }= req.body;
+
+    const { error } = reviewSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ success: false, message: error.details[0].message });
+    }
+
+    if(!product)
+        return next(new ErrorHandler("Product Not Found", 404));
+
+    const review = product.reviews.find(
+        (rev) => rev.user.toString() === req.user._id.toString()
+    );
+
+    if(!review)
+        return next(new ErrorHandler("You haven't reviewed this product yet", 404));
+
+    review.rating = rating;
+    review.comment = comment;
+
+    calculateAverageRating(product);
+    await product.save();
+
+
+    res.status(200).json({
+        success: true,
+        message: "Review updated Sucessfully."
+    })
+    
+});
+
+// Delete Review:
+export const deleteReview = asyncRequestHandler(async(req, res, next)=>{
+    const id = req.params.id;
+    const product = await Product.findById(id);
+
+    if(!product)
+        return next(new ErrorHandler("Product Not Found", 404));
+
+    const reviewExist = product.reviews.find(
+        (rev) => rev.user.toString() === req.user._id.toString()
+    );
+
+    if(!reviewExist)
+        return next(new ErrorHandler("You haven't reviewed this product yet", 404));
+
+    // Delete reviews using filer...
+    // filter() unhi elements ko rakhta hai jinke liye condition true hoti hai...
+    // ta k osk elawa baki sary elements ko array m rkhy...
+    product.reviews = product.reviews.filter(
+        (rev) => rev.user.toString() !== req.user._id.toString()    //if user is is match then return false means delete review..
+    );
+
+    calculateAverageRating(product);
+    await product.save();
+
+    res.status(201).json({
+        success: true,
+        message: "Review deleted successfully!"
+    })
+
+});
+
+>>>>>>> products
 // Generate Random Products...
 
 // const generateRandomProducts = async(count = 10)=>{

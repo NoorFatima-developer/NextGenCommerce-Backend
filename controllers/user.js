@@ -4,9 +4,9 @@ import crypto from "crypto";
 import { sendCookie } from "../utils/features.js";
 import { asyncRequestHandler } from "../utils/asyncHandler.js";
 import {userSchema,  loginSchema, resetSchema } from "../validationSchemas/userValidationSchema.js";
-import ErrorHandler from "../utils/error.js";
 import { sendEmail } from "../utils/sendEmail.js";
 import jwt from "jsonwebtoken";
+import ErrorHandler from "../middlewares/error.js";
 
 export const register = asyncRequestHandler(async (req, res, next) => {
   const { name, email, password } = req.body;
@@ -40,7 +40,7 @@ export const register = asyncRequestHandler(async (req, res, next) => {
     return next(new ErrorHandler(resendError, 500));
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Registered successfully! Please verify your email to login.",
   });
@@ -95,7 +95,7 @@ export const verifyEmail = asyncRequestHandler(async (req, res, next) => {
   user.isVerified = true;
   await user.save();
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Email verified",
   });
@@ -103,7 +103,7 @@ export const verifyEmail = asyncRequestHandler(async (req, res, next) => {
 
 // For user...
 export const getUserDetails = (req, res) => {
-  res.json({
+  return res.json({
     success: true,
     user: req.user, // Since req.user is set in isAuthenticated
   });
@@ -111,7 +111,7 @@ export const getUserDetails = (req, res) => {
 
 // For admin...
 export const adminDashboard = (req, res) => {
-  res.json({
+  return res.json({
     success: true,
     message: "Welcome Admin!",
   });
@@ -160,7 +160,7 @@ export const profileUpdate = asyncRequestHandler(async (req, res, next) => {
 
   await user.save();
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Profile updated successfully.",
     user,
@@ -170,7 +170,7 @@ export const profileUpdate = asyncRequestHandler(async (req, res, next) => {
 // For logout..
 
 export const logout = asyncRequestHandler(async (req, res, next) => {
-  res
+  return res
     .status(200)
     .cookie("token", "", {
       httpOnly: true,
@@ -203,11 +203,11 @@ export const forgetPassword = asyncRequestHandler(async(req, res, next) => {
     return next(new ErrorHandler(resendError, 500));
   }
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: `Reset token has been sent to ${user.email}`
   })
-})
+});
 
 // Reset Password...
 export const resetPassword = asyncRequestHandler(async(req, res, next) => {
@@ -243,7 +243,7 @@ export const resetPassword = asyncRequestHandler(async(req, res, next) => {
   
   await user.save();
 
-  res.status(200).json({
+  return res.status(200).json({
     success: true,
     message: "Password Changed Successfully",
   })
