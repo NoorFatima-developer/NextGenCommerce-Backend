@@ -9,8 +9,8 @@ router.get("/my", isAuthenticated, myOrders);
 router.get("/all", adminOnly, allOrders);
 router.route("/:id")
 .get(getSingleOrder)
-.put(processOrder)
-.delete(deleteOrder);
+.put(adminOnly, processOrder)
+.delete(adminOnly,deleteOrder);
     
 
 export default router;
