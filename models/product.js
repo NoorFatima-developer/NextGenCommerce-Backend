@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 const ProductSchema = new mongoose.Schema(
   {
     name: {
+      // unique: true,
       type: String,
       required: [true, "Name is required"],
     },
@@ -52,5 +53,6 @@ const ProductSchema = new mongoose.Schema(
   
 );
 
+// ProductSchema.index({ name: 1 }, { unique: true });
 const Product = mongoose.model("Product", ProductSchema);
 export default Product;

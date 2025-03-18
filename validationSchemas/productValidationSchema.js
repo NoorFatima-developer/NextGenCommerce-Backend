@@ -2,9 +2,9 @@ import Joi from "joi";
 
 // ProductSchema
 export const productSchema = Joi.object({
-    name: Joi.string().min(8).max(100).messages({
+    name: Joi.string().min(6).max(100).messages({
         "string.base": "Product name must be a string.",
-        "string.min": "Product name must be at least 8 characters long.",
+        "string.min": "Product name must be at least 6 characters long.",
         "string.max": "Product name cannot exceed 100 characters.",
     }),
     description: Joi.string().min(10).max(2000).messages({

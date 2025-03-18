@@ -3,12 +3,11 @@ import Product from "../models/product.js";
 import ErrorHandler from "../middlewares/error.js";
 import fs from "fs";
 import { myCache } from "../app.js";
-import { invalidateCache } from "../utils/features.js";
+import { calculateAverageRating, invalidateCache } from "../utils/features.js";
 import {
   productSchema,
   reviewSchema,
 } from "../validationSchemas/productValidationSchema.js";
-import { calculateAverageRating } from "../utils/averageRating.js";
 // import { faker } from '@faker-js/faker';
 
 //Get Latest products...
@@ -16,10 +15,13 @@ import { calculateAverageRating } from "../utils/averageRating.js";
 export const getlatestProducts = asyncRequestHandler(async (req, res, next) => {
   let products = [];
 
-  if (myCache.has("latest-product"))
+  if (myCache.has("latest-product")){
+    console.log("Fetching from cache");
     products = JSON.parse(myCache.get("latest-product"));
-  else {
+  }else{
+    console.log("Fetching from database");
     products = await Product.find({}).sort({ createdAt: -1 }).limit(5);
+    console.log("Products from DB:", products);
     // Store products data in cache memory...
     myCache.set("latest-product", JSON.stringify(products));
   }
@@ -96,13 +98,21 @@ export const newProduct = asyncRequestHandler(async (req, res, next) => {
 
   if (!name || !description || !price || !stock || !category) {
     // photo removed from upload automatically if photo is selected and other fields are not...
+    await fs.promises.rm(photo.path, () => {
+      console.log("Deleted");
+      return next(new ErrorHandler("Please enter all fields", 400));
+    });
+  }
+
+  const existingProduct = await Product.findOne({ name });
+  if(existingProduct){
     fs.rm(photo.path, () => {
       console.log("Deleted");
     });
-
-    return next(new ErrorHandler("Please ennter all fields", 400));
+    return next(new ErrorHandler("Product with this name already exists", 400));
   }
-  await Product.create({
+
+  const product = await Product.create({
     name,
     description,
     price,
@@ -111,12 +121,14 @@ export const newProduct = asyncRequestHandler(async (req, res, next) => {
     photo: photo.path,
   });
 
+
   // remove old cache from memory...
   await invalidateCache({ product: true });
 
   return res.status(201).json({
     success: true,
     message: "Product Creted Successfully",
+    product,
   });
 });
 
@@ -135,11 +147,10 @@ export const updateProduct = asyncRequestHandler(async (req, res, next) => {
 
   // update photo with new photo...
   if (photo) {
-    fs.rm(product.photo, () => {
+    await fs.promises.rm(product.photo, () => {
       console.log("Deleted");
+      product.photo = photo.path;
     });
-
-    product.photo = photo.path;
   }
 
   if (name) product.name = name;
@@ -149,7 +160,7 @@ export const updateProduct = asyncRequestHandler(async (req, res, next) => {
   if (category) product.category = category;
   // save all products..
   await product.save();
-  await invalidateCache({ product: true });
+  await invalidateCache({ product: true, productId: product._id });
 
   return res.status(200).json({
     success: true,
@@ -170,7 +181,7 @@ export const deleteProduct = asyncRequestHandler(async (req, res, next) => {
   // and then delete other products...
   await Product.deleteOne();
 
-  await invalidateCache({ product: true });
+  await invalidateCache({ product: true, productId: product._id });
 
   return res.status(201).json({
     success: true,

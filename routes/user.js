@@ -3,7 +3,6 @@ import {
   register,
   login,
   getUserDetails,
-  adminDashboard,
   verifyEmail,
   logout,
   profileUpdate,
