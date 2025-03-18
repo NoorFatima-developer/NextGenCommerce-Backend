@@ -35,6 +35,8 @@ export const isAuthenticated = asyncRequestHandler (async (req, res, next) => {
 // Middleware to make sure only admin is allowed...
 // Approach 01...
 export const adminOnly = (req, res, next) => {
+  console.log(req.user);
+  
   if (!req.user || req.user.role !== "admin") {
     return res.status(403).json({
       success: false,

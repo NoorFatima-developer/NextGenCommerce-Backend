@@ -4,13 +4,13 @@ import { adminOnly, isAuthenticated } from "../middlewares/auth.js";
 
 const router = express.Router();
 
-router.post("/new", newOrder);
+router.post("/new",isAuthenticated, newOrder);
 router.get("/my", isAuthenticated, myOrders);
-router.get("/all", adminOnly, allOrders);
+router.get("/all",isAuthenticated, adminOnly, allOrders);
 router.route("/:id")
 .get(getSingleOrder)
-.put(adminOnly, processOrder)
-.delete(adminOnly,deleteOrder);
+.put(isAuthenticated, adminOnly, processOrder)
+.delete(isAuthenticated, adminOnly,deleteOrder);
     
 
 export default router;

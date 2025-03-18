@@ -1,21 +1,23 @@
 import mongoose from "mongoose";
-import { myCache } from "../app.js";
 import ErrorHandler from "../middlewares/error.js";
 import { Order } from "../models/order.js";
 import { asyncRequestHandler } from "../utils/asyncHandler.js";
 import { getOrders, invalidateCache, reduceStock, singleOrder } from "../utils/features.js";
 
-
 // Get myOrders...
 export const myOrders = asyncRequestHandler(async (req, res, next) => {
-  const user = req.user._id;
-  const key = `my-orders-${user}`;
-
-  if (!user) {
+  if (!req.user?._id) {
     return next(new ErrorHandler("Invalid UserId", 400));
   }
+  console.log(req.user);
+  
+  const userId = new mongoose.Types.ObjectId(req.user._id); 
+  console.log(userId);
+   
+  const key = `my-orders-${userId}`;
 
-  const orders = await getOrders(key, { user });
+  const orders = await getOrders(key, { user:userId });
+
 
   return res.status(200).json({
     success: true,
@@ -54,13 +56,12 @@ export const newOrder = asyncRequestHandler(async (req, res, next) => {
     shippingInfo,
     status,
     orderItems,
-    user,
     subtotal,
     shippingCharges,
     discount,
     tax,
     total,
-  } = req.body;
+  } = req.body
 
   if (
     !shippingInfo ||
@@ -68,16 +69,14 @@ export const newOrder = asyncRequestHandler(async (req, res, next) => {
     !discount ||
     !status ||
     !orderItems ||
-    !user ||
     !subtotal ||
     !tax ||
     !total
   )
     return next(new ErrorHandler("Please Enter All Fields", 400));
 
-  const userObjectId = new mongoose.Types.ObjectId(user);
+    const userObjectId = new mongoose.Types.ObjectId(req.user._id);
 
-  // Create Order:
   const order = await Order.create({
     shippingInfo,
     shippingCharges,
@@ -92,7 +91,7 @@ export const newOrder = asyncRequestHandler(async (req, res, next) => {
 
   await reduceStock(orderItems);
 
-  await invalidateCache(true, true, true, user, order._id, order.orderItems.map(i => i.productId));
+  await invalidateCache(true, true, true, userObjectId.toString(), order._id, order.orderItems.map(i => i.productId));
 
   return res.status(201).json({
     success: true,

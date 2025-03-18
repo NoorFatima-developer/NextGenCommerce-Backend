@@ -63,12 +63,6 @@ export const login = asyncRequestHandler(async (req, res, next) => {
     return next(new ErrorHandler("Invalid Email and Password", 404));
   }
 
-  // check user verification:
-  if (!user.isVerified) {
-    return next(
-      new ErrorHandler("Please verify your email before logging in.", 403)
-    );
-  }
 
   const isMatch = await bcrypt.compare(password, user.password);
 
